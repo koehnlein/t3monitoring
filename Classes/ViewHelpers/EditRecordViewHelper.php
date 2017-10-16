@@ -22,7 +22,6 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\CompileWithRenderStatic;
  */
 class EditRecordViewHelper extends AbstractViewHelper implements CompilableInterface
 {
-
     use CompileWithRenderStatic;
 
     /**
@@ -43,8 +42,7 @@ class EditRecordViewHelper extends AbstractViewHelper implements CompilableInter
         array $arguments,
         \Closure $renderChildrenClosure,
         RenderingContextInterface $renderingContext
-    )
-    {
+    ) {
         $parameters = GeneralUtility::explodeUrl2Array($arguments['parameters']);
 
         $parameters['returnUrl'] = 'index.php?M=tools_T3monitoringT3monitor&moduleToken='

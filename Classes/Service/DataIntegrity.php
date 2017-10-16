@@ -172,12 +172,12 @@ class DataIntegrity
             'uid'
         );
 
-        $this->getDatabaseConnection()->exec_UPDATEquery($table, '1=1', array('is_used' => 0));
+        $this->getDatabaseConnection()->exec_UPDATEquery($table, '1=1', ['is_used' => 0]);
         if (!empty($coreRows)) {
             $this->getDatabaseConnection()->exec_UPDATEquery(
                 $table,
                 sprintf('uid IN(%s)', implode(',', array_keys($coreRows))),
-                array('is_used' => 1)
+                ['is_used' => 1]
             );
         }
     }

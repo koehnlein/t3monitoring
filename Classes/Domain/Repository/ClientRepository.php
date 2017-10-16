@@ -8,7 +8,6 @@ namespace T3Monitor\T3monitoring\Domain\Repository;
  * LICENSE.txt file that was distributed with this source code.
  */
 
-use T3Monitor\T3monitoring\Domain\Model\Client;
 use T3Monitor\T3monitoring\Domain\Model\Dto\ClientFilterDemand;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
