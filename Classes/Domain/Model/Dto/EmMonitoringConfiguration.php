@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Domain\Model\Dto;
 
 /*
@@ -47,7 +48,7 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return int
      */
-    public function getPid()
+    public function getPid(): int
     {
         return (int)$this->pid;
     }
@@ -55,7 +56,7 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return bool
      */
-    public function getLoadBulletins()
+    public function getLoadBulletins(): bool
     {
         return (bool)$this->loadBulletins;
     }
@@ -63,7 +64,7 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return bool
      */
-    public function getUseGoogleCharts()
+    public function getUseGoogleCharts(): bool
     {
         return (bool)$this->useGoogleCharts;
     }
@@ -71,7 +72,7 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return bool
      */
-    public function isPresentationMode()
+    public function isPresentationMode(): bool
     {
         return $this->presentationMode;
     }
@@ -79,7 +80,7 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return string
      */
-    public function getIpHint()
+    public function getIpHint(): string
     {
         return $this->ipHint;
     }
@@ -87,9 +88,9 @@ class EmMonitoringConfiguration implements SingletonInterface
     /**
      * @return string
      */
-    public function getEmailForFailedClient()
+    public function getEmailForFailedClient(): string
     {
         return $this->emailForFailedClient;
     }
-    
+
 }
