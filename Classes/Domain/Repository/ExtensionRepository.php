@@ -46,15 +46,15 @@ class ExtensionRepository extends BaseRepository
      */
     public function findByDemand(ExtensionFilterDemand $demand)
     {
-        $rows = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'client.title,client.uid as clientUid,ext.name, ext.version,ext.insecure',
-            'tx_t3monitoring_domain_model_extension ext
-                RIGHT JOIN tx_t3monitoring_client_extension_mm mm on mm.uid_foreign = ext.uid
-                RIGHT JOIN tx_t3monitoring_domain_model_client client on mm.uid_local=client.uid',
-            'ext.name is not null AND client.deleted=0 AND client.hidden=0' . $this->extendWhereClause($demand),
-            '',
-            'ext.name,ext.version_integer DESC,client.title'
-        );
+//        $rows = $this->getDatabaseConnection()->exec_SELECTgetRows(
+//            'client.title,client.uid as clientUid,ext.name, ext.version,ext.insecure',
+//            'tx_t3monitoring_domain_model_extension ext
+//                RIGHT JOIN tx_t3monitoring_client_extension_mm mm on mm.uid_foreign = ext.uid
+//                RIGHT JOIN tx_t3monitoring_domain_model_client client on mm.uid_local=client.uid',
+//            'ext.name is not null AND client.deleted=0 AND client.hidden=0' . $this->extendWhereClause($demand),
+//            '',
+//            'ext.name,ext.version_integer DESC,client.title'
+//        );
 
         $result = [];
         foreach ($rows as $row) {
