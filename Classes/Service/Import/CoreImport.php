@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Service\Import;
 
 /*
@@ -8,9 +9,12 @@ namespace T3Monitor\T3monitoring\Service\Import;
  * LICENSE.txt file that was distributed with this source code.
  */
 
+use Doctrine\DBAL\Connection;
 use T3Monitor\T3monitoring\Service\DataIntegrity;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\VersionNumberUtility;
+use UnexpectedValueException;
 
 /**
  * Class CoreImport
@@ -27,49 +31,64 @@ class CoreImport extends BaseImport
     const MINIMAL_TYPO3_VERSION = '4.5.0';
 
     /**
-     * Run
-     * @throws \InvalidArgumentException
+     * Run core import
+     *
+     * @throws \Doctrine\DBAL\ConnectionException
+     * @throws \Exception
      */
     public function run()
     {
         $table = 'tx_t3monitoring_domain_model_core';
         $data = $this->getSimplifiedData();
-        $previousCoreVersions = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'uid,version',
-            $table,
-            '1=1',
-            '',
-            '',
-            '',
-            'version'
-        );
-
-        $this->getDatabaseConnection()->sql_query('START TRANSACTION');
-
-        foreach ($data as $item) {
-            $version = $item['version'];
-
-            $item['pid'] = $this->emConfiguration->getPid();
-            $item['tstamp'] = $GLOBALS['EXEC_TIME'];
-
-            // update
-            if (isset($previousCoreVersions[$version])) {
-                $this->getDatabaseConnection()->exec_UPDATEquery(
-                    $table,
-                    'uid=' . $previousCoreVersions[$version]['uid'],
-                    $item
-                );
-            } else {
-                $item['crdate'] = $GLOBALS['EXEC_TIME'];
-                $this->getDatabaseConnection()->exec_INSERTquery(
-                    $table,
-                    $item
-                );
-            }
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+        $rows = $queryBuilder
+            ->select('uid', 'version')
+            ->from($table)
+            ->execute()
+            ->fetchAll();
+        $previousCoreVersions = [];
+        foreach ($rows as $row) {
+            $previousCoreVersions[$row['version']] = $row;
         }
-        $this->getDatabaseConnection()->sql_query('COMMIT');
 
-        /** @var DataIntegrity $dataIntegrity */
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable($table);
+        $connection->beginTransaction();
+
+        try {
+            foreach ($data as $item) {
+                $version = $item['version'];
+
+                $item['pid'] = $this->emConfiguration->getPid();
+                $item['tstamp'] = $GLOBALS['EXEC_TIME'];
+
+                if (isset($previousCoreVersions[$version])) {
+                    $connection->update(
+                        $table,
+                        [
+                            'tstamp' => $GLOBALS['EXEC_TIME'],
+                            'pid' => $this->emConfiguration->getPid()
+                        ],
+                        [
+                            'uid' => $previousCoreVersions[$version]['uid']
+                        ]
+                    );
+                } else {
+                    $item['crdate'] = $GLOBALS['EXEC_TIME'];
+
+                    $connection->insert(
+                        $table,
+                        $item
+                    );
+                }
+            }
+            $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+
         $dataIntegrity = GeneralUtility::makeInstance(DataIntegrity::class);
         $dataIntegrity->invokeAfterCoreImport();
         $this->setImportTime('core');
@@ -78,7 +97,7 @@ class CoreImport extends BaseImport
     /**
      * @return array
      */
-    protected function getSimplifiedData()
+    protected function getSimplifiedData(): array
     {
         $data = [];
         $import = $this->getRawData();
@@ -159,7 +178,7 @@ class CoreImport extends BaseImport
      * @param string $date
      * @return string
      */
-    protected function getReleaseDate($date)
+    protected function getReleaseDate($date): string
     {
         $converted = new \DateTime($date);
         return $converted->format('Y-m-d H:i:s');
@@ -168,9 +187,9 @@ class CoreImport extends BaseImport
     /**
      * @param string $type
      * @return int
-     * @throws \UnexpectedValueException
+     * @throws UnexpectedValueException
      */
-    protected function getType($type)
+    protected function getType($type): int
     {
         switch ($type) {
             case 'regular':
@@ -186,22 +205,22 @@ class CoreImport extends BaseImport
                 $id = self::TYPE_DEVELOPMENT;
                 break;
             default:
-                throw new \UnexpectedValueException(sprintf('Not known type "%s" found', $type));
+                throw new UnexpectedValueException(sprintf('Not known type "%s" found', $type));
         }
         return $id;
     }
 
     /**
      * @return mixed
-     * @throws \UnexpectedValueException
+     * @throws UnexpectedValueException
      */
-    protected function getRawData()
+    protected function getRawData(): array
     {
         $content = GeneralUtility::getUrl(self::URL);
         if (empty($content)) {
-            throw new \UnexpectedValueException('JSON could not be downloaded');
+            throw new UnexpectedValueException('JSON could not be downloaded');
         }
 
-        return json_decode($content, true);
+        return (array)json_decode($content, true);
     }
 }
