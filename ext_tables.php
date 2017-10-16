@@ -2,10 +2,10 @@
 defined('TYPO3_MODE') || die('Access denied.');
 
 call_user_func(
-    function ($extKey) {
+    function () {
         if (TYPO3_MODE === 'BE') {
             \TYPO3\CMS\Extbase\Utility\ExtensionUtility::registerModule(
-                'T3Monitor.' . $extKey,
+                'T3Monitor.t3monitoring',
                 'tools',
                 't3monitor',
                 'top',
@@ -19,11 +19,10 @@ call_user_func(
                 ],
                 [
                     'access' => 'user,group',
-                    'icon' => 'EXT:' . $extKey . '/Resources/Public/Icons/module.svg',
-                    'labels' => 'LLL:EXT:' . $extKey . '/Resources/Private/Language/locallang_t3monitor.xlf',
+                    'icon' => 'EXT:t3monitoring/Resources/Public/Icons/module.svg',
+                    'labels' => 'LLL:EXT:t3monitoring/Resources/Private/Language/locallang_t3monitor.xlf',
                 ]
             );
         }
-    },
-    $_EXTKEY
+    }
 );

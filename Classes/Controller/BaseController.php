@@ -99,8 +99,7 @@ class BaseController extends ActionController
         /** @var PageRenderer $pageRenderer */
         $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
         $pageRenderer->loadRequireJsModule('TYPO3/CMS/T3monitoring/Main');
-        $pageRenderer->addCssFile(ExtensionManagementUtility::extRelPath('t3monitoring')
-            . 'Resources/Public/Css/t3monitoring.css');
+        $pageRenderer->addCssFile('EXT:t3monitoring/Resources/Public/Css/t3monitoring.css');
 
         $this->createMenu();
         $this->getButtons();
@@ -170,7 +169,7 @@ class BaseController extends ActionController
                 'action' => $this->request->getControllerActionName(),
                 'controller' => $this->request->getControllerName()
             ]
-        ], false, true));
+        ]));
         $pid = $this->emConfiguration->getPid();
 
         // new client

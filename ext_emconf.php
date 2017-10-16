@@ -7,16 +7,18 @@ $EM_CONF[$_EXTKEY] = [
     'author' => 'Georg Ringer',
     'author_email' => '',
     'state' => 'beta',
-    'internal' => '',
-    'uploadfolder' => false,
-    'createDirs' => '',
     'clearCacheOnLoad' => 0,
-    'version' => '1.0.1',
+    'version' => '2.0.0',
     'constraints' => [
         'depends' => [
-            'typo3' => '7.6.0-8.99.99',
+            'typo3' => '8.7.6-8.99.99',
         ],
         'conflicts' => [],
         'suggests' => [],
+    ],
+    'autoload' => [
+        'psr-4' => [
+            'T3Monitor\\T3monitoring\\' => 'Classes'
+        ]
     ],
 ];

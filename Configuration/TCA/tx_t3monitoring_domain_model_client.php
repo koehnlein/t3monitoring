@@ -254,10 +254,10 @@ return [
             'config' => [
                 'readOnly' => true,
                 'type' => 'input',
-                'size' => 10,
+                'renderType' => 'inputDateTime',
                 'eval' => 'datetime',
-                'checkbox' => 1,
-                'default' => 0
+                'default' => 0,
+                'size' => 10,
             ],
         ],
         'extensions' => [
