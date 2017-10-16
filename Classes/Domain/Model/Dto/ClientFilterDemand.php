@@ -272,7 +272,7 @@ class ClientFilterDemand extends AbstractEntity
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isWithEmailAddress()
     {
@@ -280,7 +280,7 @@ class ClientFilterDemand extends AbstractEntity
     }
 
     /**
-     * @param boolean $withEmailAddress
+     * @param bool $withEmailAddress
      * @return $this
      */
     public function setWithEmailAddress($withEmailAddress)
@@ -288,6 +288,4 @@ class ClientFilterDemand extends AbstractEntity
         $this->withEmailAddress = $withEmailAddress;
         return $this;
     }
-
-
 }

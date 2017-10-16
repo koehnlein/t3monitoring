@@ -21,7 +21,7 @@ class ExtensionCategoryViewHelper extends AbstractViewHelper
      *
      * @var array
      */
-    protected static $defaultCategories = array(
+    protected static $defaultCategories = [
         0 => 'be',
         1 => 'module',
         2 => 'fe',
@@ -32,7 +32,7 @@ class ExtensionCategoryViewHelper extends AbstractViewHelper
         8 => 'doc',
         9 => 'example',
         10 => 'distribution'
-    );
+    ];
 
     /**
      * @param int $category
