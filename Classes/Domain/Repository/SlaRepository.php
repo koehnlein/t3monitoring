@@ -19,7 +19,8 @@ class SlaRepository extends BaseRepository
     /**
      * Initialize object
      */
-    public function initializeObject() {
+    public function initializeObject()
+    {
         $this->setDefaultOrderings(['sorting' => QueryInterface::ORDER_ASCENDING]);
     }
 }

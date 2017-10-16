@@ -12,10 +12,10 @@ use Exception;
 use T3Monitor\T3monitoring\Domain\Model\Extension;
 use T3Monitor\T3monitoring\Notification\EmailNotification;
 use T3Monitor\T3monitoring\Service\DataIntegrity;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\StringUtility;
 use TYPO3\CMS\Core\Utility\VersionNumberUtility;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
 /**
  * Class ClientImport
@@ -25,10 +25,10 @@ class ClientImport extends BaseImport
     const TABLE = 'tx_t3monitoring_domain_model_client';
 
     /** @var array */
-    protected $coreVersions = array();
+    protected $coreVersions = [];
 
     /** @var array */
-    protected $responseCount = array('error' => 0, 'success' => 0);
+    protected $responseCount = ['error' => 0, 'success' => 0];
 
     /** @var array */
     protected $failedClients = [];
@@ -100,7 +100,7 @@ class ClientImport extends BaseImport
                 throw new \RuntimeException('Invalid response from client ' . $row['title']);
             }
 
-            $update = array(
+            $update = [
                 'tstamp' => $GLOBALS['EXEC_TIME'],
                 'last_successful_import' => $GLOBALS['EXEC_TIME'],
                 'error_message' => '',
@@ -110,7 +110,7 @@ class ClientImport extends BaseImport
                 'disk_free_space' => $json['core']['diskFreeSpace'],
                 'core' => $this->getUsedCore($json['core']['typo3Version']),
                 'extensions' => $this->handleExtensionRelations($row['uid'], (array)$json['extensions']),
-            );
+            ];
 
             $this->addExtraData($json, $update, 'info');
             $this->addExtraData($json, $update, 'warning');
@@ -149,9 +149,9 @@ class ClientImport extends BaseImport
     {
         $this->responseCount['error']++;
         $this->failedClients[] = $client;
-        $this->getDatabaseConnection()->exec_UPDATEquery(self::TABLE, 'uid=' . (int)$client['uid'], array(
+        $this->getDatabaseConnection()->exec_UPDATEquery(self::TABLE, 'uid=' . (int)$client['uid'], [
             'error_message' => $error->getMessage()
-        ));
+        ]);
     }
 
     /**
@@ -200,11 +200,11 @@ class ClientImport extends BaseImport
      * @param array $extensions list of extensions
      * @return int count of used extensions
      */
-    protected function handleExtensionRelations($client, array $extensions = array())
+    protected function handleExtensionRelations($client, array $extensions = [])
     {
         $table = 'tx_t3monitoring_domain_model_extension';
 
-        $whereClause = array();
+        $whereClause = [];
         foreach ($extensions as $key => $data) {
             $whereClause[] = sprintf(
                 '(version=%s AND name=%s)',
@@ -219,7 +219,7 @@ class ClientImport extends BaseImport
             implode(' OR ', $whereClause)
         );
 
-        $relationsToBeAdded = array();
+        $relationsToBeAdded = [];
         foreach ($extensions as $key => $data) {
             // search if exists
             $found = null;
@@ -233,7 +233,7 @@ class ClientImport extends BaseImport
             if ($found) {
                 $relationId = $found['uid'];
             } else {
-                $insert = array(
+                $insert = [
                     'pid' => $this->emConfiguration->getPid(),
                     'name' => $key,
                     'version' => (string)$data['version'],
@@ -243,18 +243,18 @@ class ClientImport extends BaseImport
                     'state' => array_search($data['state'], Extension::$defaultStates, true),
                     'is_official' => 0,
                     'tstamp' => $GLOBALS['EXEC_TIME'],
-                );
+                ];
                 $this->getDatabaseConnection()->exec_INSERTquery('tx_t3monitoring_domain_model_extension', $insert);
                 $relationId = $this->getDatabaseConnection()->sql_insert_id();
             }
-            $fields = array('uid_local', 'uid_foreign', 'title', 'state', 'is_loaded');
-            $relationsToBeAdded[] = array(
+            $fields = ['uid_local', 'uid_foreign', 'title', 'state', 'is_loaded'];
+            $relationsToBeAdded[] = [
                 $client,
                 $relationId,
                 $data['title'],
                 array_search($data['state'], Extension::$defaultStates, true),
                 $data['isLoaded'],
-            );
+            ];
 
             $mmTable = 'tx_t3monitoring_client_extension_mm';
             $this->getDatabaseConnection()->exec_DELETEquery($mmTable, 'uid_local=' . (int)$client);
@@ -274,16 +274,16 @@ class ClientImport extends BaseImport
             return $this->coreVersions[$version]['uid'];
         } else {
             // insert new core
-            $insert = array(
+            $insert = [
                 'pid' => $this->emConfiguration->getPid(),
                 'is_official' => 0,
                 'version' => $version,
                 'version_integer' => VersionNumberUtility::convertVersionNumberToInteger($version),
                 'insecure' => 1 // @todo to be discussed
-            );
+            ];
             $this->getDatabaseConnection()->exec_INSERTquery('tx_t3monitoring_domain_model_core', $insert);
             $newId = $this->getDatabaseConnection()->sql_insert_id();
-            $this->coreVersions[$version] = array('uid' => $newId, 'version' => $version);
+            $this->coreVersions[$version] = ['uid' => $newId, 'version' => $version];
 
             return $newId;
         }

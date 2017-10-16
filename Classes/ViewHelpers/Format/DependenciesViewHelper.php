@@ -18,14 +18,14 @@ class DependenciesViewHelper extends AbstractViewHelper
 
     /**
      * For CMS 7
-     * 
+     *
      * @var bool
      * */
     protected $escapingInterceptorEnabled = false;
 
     /**
      * For CMS 8
-     * 
+     *
      * @var bool
      */
     protected $escapeOutput = false;

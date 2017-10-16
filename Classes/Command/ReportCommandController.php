@@ -122,5 +122,4 @@ class ReportCommandController extends CommandController
     {
         return $this->languageService->sL('LLL:EXT:t3monitoring/Resources/Private/Language/locallang.xlf:' . $key);
     }
-
 }

@@ -9,7 +9,6 @@ namespace T3Monitor\T3monitoring\Service\Import;
  * LICENSE.txt file that was distributed with this source code.
  */
 
-use Doctrine\DBAL\Connection;
 use T3Monitor\T3monitoring\Service\DataIntegrity;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -21,7 +20,6 @@ use UnexpectedValueException;
  */
 class CoreImport extends BaseImport
 {
-
     const TYPE_REGULAR = 0;
     const TYPE_RELEASE = 1;
     const TYPE_SECURITY = 2;

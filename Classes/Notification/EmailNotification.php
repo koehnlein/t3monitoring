@@ -20,7 +20,6 @@ use UnexpectedValueException;
  */
 class EmailNotification
 {
-
     const DEFAULT_EMAIL_NAME = 'EXT:t3monitoring';
     const DEFAULT_EMAIL_ADDRESS = 'no-reply@example.com';
 

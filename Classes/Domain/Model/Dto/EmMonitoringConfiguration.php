@@ -92,5 +92,4 @@ class EmMonitoringConfiguration implements SingletonInterface
     {
         return $this->emailForFailedClient;
     }
-
 }
