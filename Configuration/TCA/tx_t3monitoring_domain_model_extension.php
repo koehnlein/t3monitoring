@@ -83,6 +83,7 @@ return [
             'label' => 'LLL:EXT:t3monitoring/Resources/Private/Language/locallang.xlf:tx_t3monitoring_domain_model_extension.last_updated',
             'config' => [
                 'type' => 'input',
+                'dbType' => 'datetime',
                 'renderType' => 'inputDateTime',
                 'eval' => 'datetime',
                 'default' => '0000-00-00 00:00:00'

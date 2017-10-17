@@ -93,7 +93,7 @@ class AvailableUpdatesViewHelper extends AbstractViewHelper implements Compilabl
             ->execute()->fetch();
 
         if ($row) {
-            return $row['serialized_dependencies'];
+            return (string)$row['serialized_dependencies'];
         }
         return '';
     }
