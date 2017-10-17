@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Service;
 
 /*
@@ -8,7 +9,10 @@ namespace T3Monitor\T3monitoring\Service;
  * LICENSE.txt file that was distributed with this source code.
  */
 
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\DatabaseConnection;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class DataIntegrity
@@ -162,23 +166,32 @@ class DataIntegrity
     protected function usedCore()
     {
         $table = 'tx_t3monitoring_domain_model_core';
-        $coreRows = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'tx_t3monitoring_domain_model_core.uid',
-            'tx_t3monitoring_domain_model_client LEFT JOIN tx_t3monitoring_domain_model_core on tx_t3monitoring_domain_model_core.uid=tx_t3monitoring_domain_model_client.core',
-            'tx_t3monitoring_domain_model_core.uid IS NOT NULL',
-            '',
-            '',
-            '',
-            'uid'
-        );
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+        $rows = $queryBuilder
+            ->select('tx_t3monitoring_domain_model_core.uid')
+            ->from($table)
+            ->leftJoin(
+                'tx_t3monitoring_domain_model_core',
+                'tx_t3monitoring_domain_model_client',
+                'tx_t3monitoring_domain_model_client',
+                $queryBuilder->expr()->eq('tx_t3monitoring_domain_model_core.uid', $queryBuilder->quoteIdentifier('tx_t3monitoring_domain_model_client.core'))
+            )
+            ->execute()
+            ->fetchAll();
+        $coreRows = [];
+        foreach ($rows as $row) {
+            $coreRows[$row['uid']] = $row;
+        }
 
-        $this->getDatabaseConnection()->exec_UPDATEquery($table, '1=1', ['is_used' => 0]);
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable($table);
+        $connection->update($table, ['is_used' => 0], []);
         if (!empty($coreRows)) {
-            $this->getDatabaseConnection()->exec_UPDATEquery(
-                $table,
-                sprintf('uid IN(%s)', implode(',', array_keys($coreRows))),
-                ['is_used' => 1]
-            );
+            $connection->update($table, ['is_used' => 1], []);
+            foreach ($coreRows as $id => $row) {
+                $connection->update($table, ['is_used' => 1], ['uid' => $id]);
+            }
         }
     }
 
@@ -187,36 +200,62 @@ class DataIntegrity
      */
     protected function usedExtensions()
     {
-        $clients = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'uid,core',
-            'tx_t3monitoring_domain_model_client',
-            '1=1'
-        );
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable('tx_t3monitoring_domain_model_client');
+        $clients = $queryBuilder
+            ->select('uid')
+            ->from('tx_t3monitoring_domain_model_client')
+            ->execute()
+            ->fetchAll();
 
         foreach ($clients as $client) {
-            // count insecure extensions
-            $countInsecure = $this->getDatabaseConnection()->exec_SELECTcountRows(
-                'uid',
-                'tx_t3monitoring_client_extension_mm
-                    LEFT JOIN tx_t3monitoring_domain_model_extension
-                        on tx_t3monitoring_client_extension_mm.uid_foreign=tx_t3monitoring_domain_model_extension.uid',
-                'is_official=1 AND insecure = 1 AND tx_t3monitoring_client_extension_mm.uid_local=' . $client['uid']
-            );
+            $queryBuilder = $this->getQueryBuilderFor('tx_t3monitoring_client_extension_mm');
+
+            $countInsecure = $queryBuilder
+                ->count('uid')
+                ->from('tx_t3monitoring_client_extension_mm')
+                ->leftJoin(
+                    'tx_t3monitoring_client_extension_mm',
+                    'tx_t3monitoring_domain_model_extension',
+                    'tx_t3monitoring_domain_model_extension',
+                    $queryBuilder->expr()->eq('tx_t3monitoring_client_extension_mm.uid_foreign', $queryBuilder->quoteIdentifier('tx_t3monitoring_domain_model_extension.uid'))
+                )
+                ->where(
+                    $queryBuilder->expr()->eq('is_official', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('insecure', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('tx_t3monitoring_client_extension_mm.uid_local', $queryBuilder->createNamedParameter($client['uid'], \PDO::PARAM_INT))
+                )->execute()->fetchColumn(0);
+
             // count outdated extensions
-            $countOutdated = $this->getDatabaseConnection()->exec_SELECTcountRows(
-                'uid',
-                'tx_t3monitoring_client_extension_mm
-                    LEFT JOIN tx_t3monitoring_domain_model_extension
-                        on tx_t3monitoring_client_extension_mm.uid_foreign=tx_t3monitoring_domain_model_extension.uid',
-                'is_official=1 AND insecure = 0 AND is_latest=0 AND tx_t3monitoring_client_extension_mm.uid_local=' . $client['uid']
-            );
+            $queryBuilder = $this->getQueryBuilderFor('tx_t3monitoring_client_extension_mm');
+            $countOutdated = $queryBuilder
+                ->count('uid')
+                ->from('tx_t3monitoring_client_extension_mm')
+                ->leftJoin(
+                    'tx_t3monitoring_client_extension_mm',
+                    'tx_t3monitoring_domain_model_extension',
+                    'tx_t3monitoring_domain_model_extension',
+                    $queryBuilder->expr()->eq('tx_t3monitoring_client_extension_mm.uid_foreign', $queryBuilder->quoteIdentifier('tx_t3monitoring_domain_model_extension.uid'))
+                )
+                ->where(
+                    $queryBuilder->expr()->eq('is_official', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('insecure', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('is_latest', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('tx_t3monitoring_client_extension_mm.uid_local', $queryBuilder->createNamedParameter($client['uid'], \PDO::PARAM_INT))
+                )->execute()->fetchColumn(0);
+
+
             // update client
-            $this->getDatabaseConnection()->exec_UPDATEquery(
+            $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getConnectionForTable('tx_t3monitoring_domain_model_client');
+            $connection->update(
                 'tx_t3monitoring_domain_model_client',
-                'uid=' . $client['uid'],
                 [
                     'insecure_extensions' => $countInsecure,
                     'outdated_extensions' => $countOutdated
+                ],
+                [
+                    'uid' => $client['uid']
                 ]
             );
         }
@@ -229,6 +268,12 @@ class DataIntegrity
               SELECT uid_foreign FROM tx_t3monitoring_client_extension_mm
             );'
         );
+    }
+
+    protected function getQueryBuilderFor(string $table): QueryBuilder
+    {
+        return GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
     }
 
     /**

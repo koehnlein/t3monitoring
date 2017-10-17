@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Service\Import;
 
 /*
@@ -12,6 +13,7 @@ use Exception;
 use T3Monitor\T3monitoring\Domain\Model\Extension;
 use T3Monitor\T3monitoring\Notification\EmailNotification;
 use T3Monitor\T3monitoring\Service\DataIntegrity;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\StringUtility;
@@ -47,20 +49,24 @@ class ClientImport extends BaseImport
     }
 
     /**
-     * @param null|int $clientId
+     * @param int $clientId
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    public function run($clientId = null)
+    public function run(int $clientId = 0)
     {
-        $where = 'deleted=0 AND hidden=0';
-        if ($clientId !== null) {
-            $clientId = (int)$clientId;
-            if ($clientId > 0) {
-                $where .= ' AND uid=' . $clientId;
-            }
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable(self::TABLE);
+        $query = $queryBuilder
+            ->select('*')
+            ->from(self::TABLE);
+        if ($clientId > 0) {
+            $query->where(
+                $queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($clientId, \PDO::PARAM_INT))
+            );
         }
-        $clientRows = $this->getDatabaseConnection()->exec_SELECTgetRows('*', self::TABLE, $where);
+
+        $clientRows = $query->execute()->fetchAll();
 
         foreach ($clientRows as $client) {
             $this->importSingleClient($client);
@@ -70,7 +76,6 @@ class ClientImport extends BaseImport
             $this->emailNotification->sendClientFailedEmail($this->failedClients);
         }
 
-        /** @var DataIntegrity $dataIntegrity */
         $dataIntegrity = GeneralUtility::makeInstance(DataIntegrity::class);
         $dataIntegrity->invokeAfterClientImport();
         $this->setImportTime('client');
@@ -116,8 +121,10 @@ class ClientImport extends BaseImport
             $this->addExtraData($json, $update, 'warning');
             $this->addExtraData($json, $update, 'danger');
 
-            $this->getDatabaseConnection()->exec_UPDATEquery('tx_t3monitoring_domain_model_client',
-                'uid=' . (int)$row['uid'], $update);
+            $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getConnectionForTable(self::TABLE);
+            $connection->update(self::TABLE, $update, ['uid' => (int)$row['uid']]);
+
             $this->responseCount['success']++;
         } catch (Exception $e) {
             $this->handleError($row, $e);
@@ -149,9 +156,17 @@ class ClientImport extends BaseImport
     {
         $this->responseCount['error']++;
         $this->failedClients[] = $client;
-        $this->getDatabaseConnection()->exec_UPDATEquery(self::TABLE, 'uid=' . (int)$client['uid'], [
-            'error_message' => $error->getMessage()
-        ]);
+
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable(self::TABLE);
+        $connection->update(self::TABLE,
+            [
+                'error_message' => $error->getMessage()
+            ],
+            [
+                'uid' => (int)$client['uid']
+            ]
+        );
     }
 
     /**
@@ -268,40 +283,47 @@ class ClientImport extends BaseImport
      * @param string $version
      * @return int
      */
-    protected function getUsedCore($version)
+    protected function getUsedCore(string $version): int
     {
         if (isset($this->coreVersions[$version])) {
             return $this->coreVersions[$version]['uid'];
-        } else {
-            // insert new core
-            $insert = [
-                'pid' => $this->emConfiguration->getPid(),
-                'is_official' => 0,
-                'version' => $version,
-                'version_integer' => VersionNumberUtility::convertVersionNumberToInteger($version),
-                'insecure' => 1 // @todo to be discussed
-            ];
-            $this->getDatabaseConnection()->exec_INSERTquery('tx_t3monitoring_domain_model_core', $insert);
-            $newId = $this->getDatabaseConnection()->sql_insert_id();
-            $this->coreVersions[$version] = ['uid' => $newId, 'version' => $version];
-
-            return $newId;
         }
+
+        // insert new core
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable('tx_t3monitoring_domain_model_core');
+
+        $insert = [
+            'pid' => $this->emConfiguration->getPid(),
+            'is_official' => 0,
+            'version' => $version,
+            'version_integer' => VersionNumberUtility::convertVersionNumberToInteger($version),
+            'insecure' => 1 // @todo to be discussed
+        ];
+
+        $connection->insert('tx_t3monitoring_domain_model_core', $insert);
+        $newId = $connection->lastInsertId('tx_t3monitoring_domain_model_core');
+        $this->coreVersions[$version] = ['uid' => $newId, 'version' => $version];
+
+        return $newId;
     }
 
     /**
-     * @return array|NULL
+     * @return array
      */
-    protected function getAllCoreVersions()
+    protected function getAllCoreVersions(): array
     {
-        return $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'uid,version',
-            'tx_t3monitoring_domain_model_core',
-            '1=1',
-            '',
-            '',
-            '',
-            'version'
-        );
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable('tx_t3monitoring_domain_model_core');
+        $rows = $queryBuilder
+            ->select('uid', 'version')
+            ->from('tx_t3monitoring_domain_model_core')
+            ->execute()
+            ->fetchAll();
+        $finalRows = [];
+        foreach ($rows as $row) {
+            $finalRows[$row['version']] = $row;
+        }
+        return $finalRows;
     }
 }
