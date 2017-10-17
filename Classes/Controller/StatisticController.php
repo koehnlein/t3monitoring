@@ -59,7 +59,7 @@ class StatisticController extends BaseController
      */
     public function indexAction(ClientFilterDemand $filter = null)
     {
-        if (is_null($filter)) {
+        if (null === $filter) {
             $filter = $this->getClientFilterDemand();
             $this->view->assign('showIntro', true);
         } else {
@@ -121,19 +121,16 @@ class StatisticController extends BaseController
         if (!empty($import)) {
             switch ($import) {
                 case 'clients':
-                    /** @var ClientImport $importService */
                     $importService = $this->objectManager->get(ClientImport::class);
                     $importService->run();
                     $success = true;
                     break;
                 case 'extensions':
-                    /** @var ExtensionImport $importService */
                     $importService = $this->objectManager->get(ExtensionImport::class);
                     $importService->run();
                     $success = true;
                     break;
                 case 'core':
-                    /** @var CoreImport $importService */
                     $importService = $this->objectManager->get(CoreImport::class);
                     $importService->run();
                     $success = true;

@@ -32,8 +32,6 @@ class TagController extends BaseController
 
     /**
      * action list
-     *
-     * @return void
      */
     public function listAction()
     {
@@ -45,7 +43,6 @@ class TagController extends BaseController
      * action show
      *
      * @param Tag $tag
-     * @return void
      */
     public function showAction(Tag $tag = null)
     {

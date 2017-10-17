@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Controller;
 
 /*
@@ -225,7 +226,7 @@ class BaseController extends ActionController
      * @param string $key
      * @return string
      */
-    protected function getLabel($key)
+    protected function getLabel($key): string
     {
         return $this->getLanguageService()->sL('LLL:EXT:t3monitoring/Resources/Private/Language/locallang.xlf:' . $key);
     }
@@ -233,9 +234,8 @@ class BaseController extends ActionController
     /**
      * @return UriBuilder
      */
-    protected function getUriBuilder()
+    protected function getUriBuilder(): UriBuilder
     {
-        /** @var UriBuilder $uriBuilder */
         $uriBuilder = $this->objectManager->get(UriBuilder::class);
         $uriBuilder->setRequest($this->request);
 
@@ -245,7 +245,7 @@ class BaseController extends ActionController
     /**
      * @return ClientFilterDemand
      */
-    protected function getClientFilterDemand()
+    protected function getClientFilterDemand(): ClientFilterDemand
     {
         return $this->objectManager->get(ClientFilterDemand::class);
     }
@@ -255,7 +255,7 @@ class BaseController extends ActionController
      *
      * @return LanguageService
      */
-    protected function getLanguageService()
+    protected function getLanguageService(): LanguageService
     {
         return $GLOBALS['LANG'];
     }
