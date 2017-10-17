@@ -37,8 +37,6 @@ class AvailableUpdatesViewHelper extends AbstractViewHelper implements Compilabl
     }
 
     /**
-     * Output different objects
-     *
      * @param array $arguments
      * @param \Closure $renderChildrenClosure
      * @param RenderingContextInterface $renderingContext
