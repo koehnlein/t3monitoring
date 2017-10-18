@@ -218,21 +218,24 @@ class ClientImport extends BaseImport
     protected function handleExtensionRelations($client, array $extensions = [])
     {
         $table = 'tx_t3monitoring_domain_model_extension';
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
 
         $whereClause = [];
         foreach ($extensions as $key => $data) {
-            $whereClause[] = sprintf(
-                '(version=%s AND name=%s)',
-                $this->getDatabaseConnection()->fullQuoteStr($data['version'], $table),
-                $this->getDatabaseConnection()->fullQuoteStr($key, $table)
-            );
+            $whereClause[] = $queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->eq('version', $queryBuilder->createNamedParameter($data['version'])),
+                    $queryBuilder->expr()->eq('name', $queryBuilder->createNamedParameter($key))
+                );
+
         }
 
-        $existingExtensions = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'uid,version,name',
-            $table,
-            implode(' OR ', $whereClause)
-        );
+        $existingExtensions = $queryBuilder
+            ->select('uid', 'version', 'name')
+            ->from($table)
+            ->where($queryBuilder->expr()->orX(...$whereClause))
+            ->execute()
+            ->fetchAll();
 
         $relationsToBeAdded = [];
         foreach ($extensions as $key => $data) {
@@ -259,8 +262,10 @@ class ClientImport extends BaseImport
                     'is_official' => 0,
                     'tstamp' => $GLOBALS['EXEC_TIME'],
                 ];
-                $this->getDatabaseConnection()->exec_INSERTquery('tx_t3monitoring_domain_model_extension', $insert);
-                $relationId = $this->getDatabaseConnection()->sql_insert_id();
+
+                $connection = $this->getConnectionTableFor($table);
+                $connection->insert('tx_t3monitoring_domain_model_extension', $insert);
+                $relationId = $connection->lastInsertId('tx_t3monitoring_domain_model_extension');
             }
             $fields = ['uid_local', 'uid_foreign', 'title', 'state', 'is_loaded'];
             $relationsToBeAdded[] = [
@@ -272,8 +277,10 @@ class ClientImport extends BaseImport
             ];
 
             $mmTable = 'tx_t3monitoring_client_extension_mm';
-            $this->getDatabaseConnection()->exec_DELETEquery($mmTable, 'uid_local=' . (int)$client);
-            $this->getDatabaseConnection()->exec_INSERTmultipleRows($mmTable, $fields, $relationsToBeAdded);
+            $mmConnection = $this->getConnectionTableFor($mmTable);
+            $mmConnection->delete($mmTable, ['uid_local=' . (int)$client]);
+            $mmConnection = $this->getConnectionTableFor($mmTable);
+            $mmConnection->bulkInsert($mmTable, $relationsToBeAdded, $fields);
         }
 
         return count($extensions);
@@ -290,8 +297,7 @@ class ClientImport extends BaseImport
         }
 
         // insert new core
-        $connection = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getConnectionForTable('tx_t3monitoring_domain_model_core');
+        $connection = $this->getConnectionTableFor('tx_t3monitoring_domain_model_core');
 
         $insert = [
             'pid' => $this->emConfiguration->getPid(),
@@ -325,5 +331,11 @@ class ClientImport extends BaseImport
             $finalRows[$row['version']] = $row;
         }
         return $finalRows;
+    }
+
+    private function getConnectionTableFor(string $table)
+    {
+        return GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable($table);
     }
 }
