@@ -227,7 +227,6 @@ class ClientImport extends BaseImport
                     $queryBuilder->expr()->eq('version', $queryBuilder->createNamedParameter($data['version'])),
                     $queryBuilder->expr()->eq('name', $queryBuilder->createNamedParameter($key))
                 );
-
         }
 
         $existingExtensions = $queryBuilder
