@@ -9,7 +9,8 @@ namespace T3Monitor\T3monitoring\Domain\Repository;
  * LICENSE.txt file that was distributed with this source code.
  */
 
-use T3Monitor\T3monitoring\Domain\Model\Dto\ClientFilterDemand;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * The repository for statistics
@@ -18,67 +19,36 @@ class StatisticRepository extends BaseRepository
 {
 
     /**
-     * @param ClientFilterDemand $demand
-     * @param bool $returnFirst
-     * @return array|NULL
+     * @return array
      */
-    public function getClientsByDemand(ClientFilterDemand $demand, $returnFirst = false)
+    public function getUsedCoreVersionCount(): array
     {
-        $where = 'tx_t3monitoring_domain_model_client.deleted=0 AND tx_t3monitoring_domain_model_client.hidden=0';
-
-        // version
-        $version = $demand->getVersion();
-        if ($version) {
-            $where .= ' AND tx_t3monitoring_domain_model_core.version_integer=' . (int)$version;
-        }
-        return [];
-//        $rows = $this->getDatabaseConnection()->exec_SELECTgetRows(
-//            'tx_t3monitoring_domain_model_client.uid,tx_t3monitoring_domain_model_client.title, tx_t3monitoring_domain_model_client.domain,
-//                tx_t3monitoring_domain_model_core.version, tx_t3monitoring_domain_model_core.insecure as insecureCore
-//                ,tx_t3monitoring_domain_model_core.is_stable,tx_t3monitoring_domain_model_core.is_active,tx_t3monitoring_domain_model_core.is_latest
-//                ',
-//            'tx_t3monitoring_domain_model_client RIGHT JOIN tx_t3monitoring_domain_model_core
-//                ON tx_t3monitoring_domain_model_client.core = tx_t3monitoring_domain_model_core.uid',
-//            $where, '', 'tx_t3monitoring_domain_model_client.title');
-//
-//        if ($returnFirst) {
-//            return array_shift($rows);
-//        }
-        return $rows;
-    }
-
-    /**
-     * @param string $version
-     * @return array|FALSE|NULL
-     */
-    public function getCoreVersion($version)
-    {
-//        return $this->getDatabaseConnection()->exec_SELECTgetSingleRow(
-//            '*',
-//            'tx_t3monitoring_domain_model_core',
-//            'version_integer=' . (int)$version
-//        );
-    }
-
-    /**
-     * @return array|NULL
-     */
-    public function getUsedCoreVersionCount()
-    {
-        return [];
-//        return $this->getDatabaseConnection()->exec_SELECTgetRows(
-//            'count(tx_t3monitoring_domain_model_core.version) as count, tx_t3monitoring_domain_model_core.version, tx_t3monitoring_domain_model_core.version_integer, tx_t3monitoring_domain_model_core.insecure as insecureCore
-//            ,tx_t3monitoring_domain_model_core.is_stable,tx_t3monitoring_domain_model_core.is_active,tx_t3monitoring_domain_model_core.is_latest',
-//            'tx_t3monitoring_domain_model_client RIGHT JOIN tx_t3monitoring_domain_model_core
-//                ON tx_t3monitoring_domain_model_client.core = tx_t3monitoring_domain_model_core.uid',
-//            'tx_t3monitoring_domain_model_client.deleted=0 AND tx_t3monitoring_domain_model_client.hidden=0', 'tx_t3monitoring_domain_model_core.version,version_integer,insecureCore,is_stable,is_latest,is_active',
-//            'tx_t3monitoring_domain_model_core.version_integer');
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable('tx_t3monitoring_domain_model_core');
+        return $queryBuilder
+            ->select('tx_t3monitoring_domain_model_core.version', 'tx_t3monitoring_domain_model_core.version_integer', 'tx_t3monitoring_domain_model_core.insecure',
+                'tx_t3monitoring_domain_model_core.is_stable', 'tx_t3monitoring_domain_model_core.is_active', 'tx_t3monitoring_domain_model_core.is_latest')
+            ->selectLiteral('count(tx_t3monitoring_domain_model_core.version) as count, tx_t3monitoring_domain_model_core.version, tx_t3monitoring_domain_model_core.version_integer, tx_t3monitoring_domain_model_core.insecure as insecureCore
+            ,tx_t3monitoring_domain_model_core.is_stable,tx_t3monitoring_domain_model_core.is_active,tx_t3monitoring_domain_model_core.is_latest')
+            ->from('tx_t3monitoring_domain_model_core')
+            ->where(
+                $queryBuilder->expr()->eq('hidden', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT))
+            )
+            ->leftJoin(
+                'tx_t3monitoring_domain_model_core',
+                'tx_t3monitoring_domain_model_client',
+                'tx_t3monitoring_domain_model_client',
+                $queryBuilder->expr()->eq('tx_t3monitoring_domain_model_client.core', $queryBuilder->quoteIdentifier('tx_t3monitoring_domain_model_core.uid'))
+            )
+            ->orderBy('tx_t3monitoring_domain_model_core.version_integer')
+            ->groupBy('tx_t3monitoring_domain_model_core.version', 'version_integer', 'insecure', 'is_stable', 'is_latest', 'is_active')
+            ->execute()->fetchAll();
     }
 
     /**
      * @return string
      */
-    public function getUsedCoreVersionCountJson()
+    public function getUsedCoreVersionCountJson(): string
     {
         $data = $this->getUsedCoreVersionCount();
         $result = [];
