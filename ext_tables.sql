@@ -37,8 +37,7 @@ CREATE TABLE tx_t3monitoring_domain_model_client (
 	hidden tinyint(4) unsigned DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
-	KEY parent (pid),
-
+	KEY parent (pid)
 );
 
 #
@@ -65,6 +64,8 @@ CREATE TABLE tx_t3monitoring_domain_model_extension (
 	is_official tinyint(1) unsigned DEFAULT '0' NOT NULL,
 	is_modified tinyint(1) unsigned DEFAULT '0' NOT NULL,
 	is_latest tinyint(1) unsigned DEFAULT '0' NOT NULL,
+	major_version int(11) unsigned DEFAULT '0' NOT NULL,
+	minor_version int(11) unsigned DEFAULT '0' NOT NULL,
 	last_bugfix_release varchar(255) DEFAULT '' NOT NULL,
 	last_minor_release varchar(255) DEFAULT '' NOT NULL,
 	last_major_release varchar(255) DEFAULT '' NOT NULL,
@@ -76,7 +77,7 @@ CREATE TABLE tx_t3monitoring_domain_model_extension (
 
 	PRIMARY KEY (uid),
 	KEY parent (pid),
-	KEY major (name,major_version),
+	KEY major (name,major_version)
 );
 
 #
@@ -106,8 +107,7 @@ CREATE TABLE tx_t3monitoring_domain_model_core (
 	cruser_id int(11) unsigned DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
-	KEY parent (pid),
-
+	KEY parent (pid)
 );
 
 #
@@ -130,8 +130,7 @@ CREATE TABLE tx_t3monitoring_domain_model_sla (
 	sorting int(11) DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
-	KEY parent (pid),
-
+	KEY parent (pid)
 );
 
 #
@@ -154,8 +153,7 @@ CREATE TABLE tx_t3monitoring_domain_model_tag (
 	sorting int(11) DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
-	KEY parent (pid),
-
+	KEY parent (pid)
 );
 
 #
@@ -167,17 +165,10 @@ CREATE TABLE tx_t3monitoring_client_extension_mm (
 	sorting int(11) unsigned DEFAULT '0' NOT NULL,
 	sorting_foreign int(11) unsigned DEFAULT '0' NOT NULL,
 
+	is_loaded tinyint(4) unsigned DEFAULT '0' NOT NULL,
+	title varchar(255) DEFAULT '' NOT NULL,
+	state int(11) DEFAULT '0' NOT NULL,
+
 	KEY uid_local (uid_local),
 	KEY uid_foreign (uid_foreign)
-);
-
-CREATE TABLE tx_t3monitoring_client_extension_mm (
-  is_loaded tinyint(4) unsigned DEFAULT '0' NOT NULL,
-  title varchar(255) DEFAULT '' NOT NULL,
-  state int(11) DEFAULT '0' NOT NULL,
-);
-
-CREATE TABLE tx_t3monitoring_domain_model_extension (
-  major_version int(11) unsigned DEFAULT '0' NOT NULL,
-  minor_version int(11) unsigned DEFAULT '0' NOT NULL,
 );
