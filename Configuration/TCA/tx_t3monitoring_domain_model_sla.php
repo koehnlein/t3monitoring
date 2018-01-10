@@ -18,18 +18,21 @@ return [
         'showRecordFieldList' => 'hidden, title, description',
     ],
     'types' => [
-        '1' => ['showitem' => 'title, description, '],
+        '1' => ['showitem' => 'title, description,
+            --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:access,
+                hidden,
+            --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:extended,'],
     ],
     'columns' => [
         'hidden' => [
-            'exclude' => 1,
-            'label' => 'LLL:EXT:lang/locallang_general.xlf:LGL.hidden',
+            'exclude' => true,
+            'label' => 'LLL:EXT:lang/Resources/Private/Language/locallang_general.xlf:LGL.hidden',
             'config' => [
                 'type' => 'check',
             ],
         ],
         'title' => [
-            'exclude' => 1,
+            'exclude' => true,
             'label' => 'LLL:EXT:t3monitoring/Resources/Private/Language/locallang.xlf:tx_t3monitoring_domain_model_sla.title',
             'config' => [
                 'type' => 'input',
@@ -38,7 +41,7 @@ return [
             ],
         ],
         'description' => [
-            'exclude' => 1,
+            'exclude' => true,
             'label' => 'LLL:EXT:t3monitoring/Resources/Private/Language/locallang.xlf:tx_t3monitoring_domain_model_sla.description',
             'config' => [
                 'type' => 'text',
