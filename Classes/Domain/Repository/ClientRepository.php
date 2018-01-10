@@ -70,8 +70,7 @@ class ClientRepository extends BaseRepository
         $demand->setWithInsecureExtensions(true);
 
         $constraints[] = $query->logicalOr(
-            $this->getConstraints($demand, $query, true
-            )
+            $this->getConstraints($demand, $query)
         );
 
         if ($emailAddressRequired) {
