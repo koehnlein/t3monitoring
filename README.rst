@@ -11,7 +11,7 @@ This extensions provides the possibility to monitor all of your TYPO3 installati
 
 **Requirements**
 
-- TYPO3 CMS 7 LTS (monitoring works also for 6.2 installations)
+- At least TYPO3 CMS 7 LTS (monitoring works also for 6.2 installations)
 - The host must have access to every client to be able to fetch the data
 
 Important: This extension is still beta and things might change!
