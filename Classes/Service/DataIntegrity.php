@@ -136,26 +136,35 @@ class DataIntegrity
     protected function getNextSecureExtensionVersion()
     {
         $table = 'tx_t3monitoring_domain_model_extension';
-        $insecureExtensions = $this->getDatabaseConnection()->exec_SELECTgetRows(
-            'uid,name,version_integer',
-            $table,
-            'insecure=1');
+
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+        $insecureExtensions = $queryBuilder
+            ->select('uid', 'name', 'version_integer')
+            ->from($table)
+            ->where($queryBuilder->expr()->eq('insecure', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT)))
+            ->execute()
+            ->fetchAll();
+
         foreach ($insecureExtensions as $row) {
-            $where = sprintf(
-                'insecure=0 AND name=%s AND version_integer>%s',
-                $this->getDatabaseConnection()->fullQuoteStr($row['name'], $table),
-                $row['version_integer']
-            );
-            $nextSecureVersion = $this->getDatabaseConnection()->exec_SELECTgetSingleRow(
-                'uid,version',
-                $table, $where);
+            $queryBuilder2 = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getQueryBuilderForTable($table);
+            $nextSecureVersion = $queryBuilder2
+                ->select('uid', 'version')
+                ->from($table)
+                ->where(
+                    $queryBuilder->expr()->eq('insecure', $queryBuilder2->createNamedParameter(0, \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('name', $queryBuilder2->createNamedParameter($row['name'])),
+                    $queryBuilder->expr()->gt('version_integer', $queryBuilder2->createNamedParameter($row['version_integer'], \PDO::PARAM_INT))
+                )
+                ->setMaxResults(1)
+                ->execute()
+                ->fetch();
 
             if (is_array($nextSecureVersion)) {
-                $this->getDatabaseConnection()->exec_UPDATEquery(
-                    $table,
-                    'uid=' . $row['uid'],
-                    ['next_secure_version' => $nextSecureVersion['version']]
-                );
+                $connection = GeneralUtility::makeInstance(ConnectionPool::class)
+                    ->getConnectionForTable($table);
+                $connection->update($table, ['next_secure_version' => $nextSecureVersion['version']], ['uid' => $row['uid']]);
             }
         }
     }
