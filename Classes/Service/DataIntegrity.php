@@ -55,30 +55,44 @@ class DataIntegrity
         $table = 'tx_t3monitoring_domain_model_extension';
 
         // Patch release
-        $queryResult = $this->getDatabaseConnection()->sql_query('
-            SELECT name,major_version as major,minor_version as minor
-            FROM tx_t3monitoring_domain_model_extension
-            WHERE insecure = 0 AND version_integer > 0 AND is_official = 1
-            GROUP BY name,major,minor'
-        );
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($table);
+        $res = $queryBuilder
+            ->select('name', 'major_version', 'minor_version')
+            ->from($table)
+            ->where(
+                $queryBuilder->expr()->eq('insecure', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                $queryBuilder->expr()->gt('version_integer', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                $queryBuilder->expr()->eq('is_official', $queryBuilder->createNamedParameter(1, \PDO::PARAM_INT))
+            )
+            ->groupBy('name', 'major_version', 'minor_version')
+            ->execute();
 
-        while ($row = $this->getDatabaseConnection()->sql_fetch_assoc($queryResult)) {
+        while ($row = $res->fetch()) {
             $where = 'name=' . $this->getDatabaseConnection()->fullQuoteStr($row['name'],
-                    $table) . ' AND major_version=' . $row['major'] . ' AND minor_version=' . $row['minor'];
-            $highestBugFixRelease = $this->getDatabaseConnection()->exec_SELECTgetSingleRow(
-                'version',
-                $table,
-                $where,
-                '',
-                'version_integer desc'
-            );
+                    $table) . ' AND major_version=' . $row['major_version'] . ' AND minor_version=' . $row['minor_version'];
+
+            $queryBuilder2 = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getQueryBuilderForTable($table);
+            $highestBugFixRelease = $queryBuilder2
+                ->select('version')
+                ->from($table)
+                ->where(
+                    $queryBuilder->expr()->eq('name', $queryBuilder2->createNamedParameter($row['name'])),
+                    $queryBuilder->expr()->eq('major_version', $queryBuilder2->createNamedParameter($row['major_version'], \PDO::PARAM_INT)),
+                    $queryBuilder->expr()->eq('minor_version', $queryBuilder2->createNamedParameter($row['minor_version'], \PDO::PARAM_INT))
+                )
+                ->orderBy('version_integer', 'desc')
+                ->setMaxResults(1)
+                ->execute()
+                ->fetch();
+
             if (is_array($highestBugFixRelease)) {
                 $this->getDatabaseConnection()->exec_UPDATEquery($table, $where, [
                     'last_bugfix_release' => $highestBugFixRelease['version']
                 ]);
             }
         }
-        $this->getDatabaseConnection()->sql_free_result($queryResult);
 
         // Minor release
         $queryResult = $this->getDatabaseConnection()->sql_query('
@@ -104,7 +118,6 @@ class DataIntegrity
                 ]);
             }
         }
-        $this->getDatabaseConnection()->sql_free_result($queryResult);
 
         // Major release
         $queryResult = $this->getDatabaseConnection()->sql_query(
@@ -121,7 +134,6 @@ class DataIntegrity
                 'last_major_release' => $row['version']
             ]);
         }
-        $this->getDatabaseConnection()->sql_free_result($queryResult);
 
         // mark latest version
         $this->getDatabaseConnection()->sql_query('
