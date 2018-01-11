@@ -13,6 +13,7 @@ use Exception;
 use T3Monitor\T3monitoring\Domain\Model\Extension;
 use T3Monitor\T3monitoring\Notification\EmailNotification;
 use T3Monitor\T3monitoring\Service\DataIntegrity;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -277,7 +278,7 @@ class ClientImport extends BaseImport
 
             $mmTable = 'tx_t3monitoring_client_extension_mm';
             $mmConnection = $this->getConnectionTableFor($mmTable);
-            $mmConnection->delete($mmTable, ['uid_local=' . (int)$client]);
+            $mmConnection->delete($mmTable, ['uid_local' => (int)$client]);
             $mmConnection = $this->getConnectionTableFor($mmTable);
             $mmConnection->bulkInsert($mmTable, $relationsToBeAdded, $fields);
         }
@@ -332,7 +333,7 @@ class ClientImport extends BaseImport
         return $finalRows;
     }
 
-    private function getConnectionTableFor(string $table)
+    private function getConnectionTableFor(string $table) : Connection
     {
         return GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable($table);
