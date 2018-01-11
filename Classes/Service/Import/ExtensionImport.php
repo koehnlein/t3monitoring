@@ -51,7 +51,7 @@ class ExtensionImport extends BaseImport
         $queryBuilderCoreExtensions = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable('tx_extensionmanager_domain_model_extension');
         $res = $queryBuilderCoreExtensions
-            ->select('extension_key', 'state', 'review_state', 'version', 'title', 'category', 'description', 'last_updated', 'author_name', 'update_comment', 'integer_version', 'state', 'current_version', 'serialized_dependencies')
+            ->select('extension_key', 'state', 'review_state', 'version', 'title', 'category', 'description', 'last_updated', 'author_name', 'update_comment', 'integer_version', 'current_version', 'serialized_dependencies')
             ->from('tx_extensionmanager_domain_model_extension')
             ->where(
                 $queryBuilderCoreExtensions->expr()->gt('last_updated', $queryBuilderCoreExtensions->createNamedParameter(strtotime(self::MIN_DATE)))

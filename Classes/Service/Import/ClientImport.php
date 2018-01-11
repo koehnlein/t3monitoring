@@ -278,7 +278,7 @@ class ClientImport extends BaseImport
 
             $mmTable = 'tx_t3monitoring_client_extension_mm';
             $mmConnection = $this->getConnectionTableFor($mmTable);
-            $mmConnection->delete($mmTable, ['uid_local=' . (int)$client]);
+            $mmConnection->delete($mmTable, ['uid_local' => (int)$client]);
             $mmConnection = $this->getConnectionTableFor($mmTable);
             $mmConnection->bulkInsert($mmTable, $relationsToBeAdded, $fields);
         }
