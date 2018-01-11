@@ -23,7 +23,7 @@ class ExtensionCategoryViewHelper extends AbstractViewHelper implements Compilab
 
     public function initializeArguments()
     {
-        $this->registerArgument('category', 'int', 'category', true);
+        $this->registerArgument('category', 'int', 'category', false, 0);
     }
 
     /**

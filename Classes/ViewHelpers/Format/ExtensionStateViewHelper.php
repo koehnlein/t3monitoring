@@ -24,7 +24,7 @@ class ExtensionStateViewHelper extends AbstractViewHelper implements CompilableI
 
     public function initializeArguments()
     {
-        $this->registerArgument('state', 'int', 'state', true);
+        $this->registerArgument('state', 'int', 'state', false, 0);
     }
 
     /**
