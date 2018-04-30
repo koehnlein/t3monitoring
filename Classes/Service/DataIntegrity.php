@@ -255,10 +255,8 @@ class DataIntegrity
             ->execute()
             ->fetchAll();
 
-        $queryBuilder = $connection->createQueryBuilder();
-        $queryBuilder2 = $connection->createQueryBuilder();
         foreach ($clients as $client) {
-            $countInsecure = $queryBuilder
+            $countInsecure = $connection->createQueryBuilder()
                 ->count('uid')
                 ->from('tx_t3monitoring_client_extension_mm')
                 ->leftJoin(
@@ -274,7 +272,7 @@ class DataIntegrity
                 )->execute()->fetchColumn(0);
 
             // count outdated extensions
-            $countOutdated = $queryBuilder2
+            $countOutdated = $connection->createQueryBuilder()
                 ->count('uid')
                 ->from('tx_t3monitoring_client_extension_mm')
                 ->leftJoin(
