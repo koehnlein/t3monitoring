@@ -68,6 +68,7 @@ class ClientRepository extends BaseRepository
         $demand = $this->getFilterDemand();
         $demand->setWithInsecureCore(true);
         $demand->setWithInsecureExtensions(true);
+        $demand->setWithExtraDanger(true);
 
         $constraints[] = $query->logicalOr(
             $this->getConstraints($demand, $query)
