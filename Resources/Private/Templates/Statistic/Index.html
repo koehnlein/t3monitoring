@@ -181,9 +181,9 @@
                                             <ul>
                                                 <f:for each="{feedItems}" as="item">
                                                     <li>
-                                                        <f:link.external target="_blank" uri="{item.link}">
+                                                        <a target="_blank" href="{item.link}">
                                                             {item.title}
-                                                        </f:link.external>
+                                                        </a>
                                                         <f:if condition="{item.date}">
                                                             <i>{item.date -> f:format.date(format:'d.m.Y')}</i>
                                                         </f:if>
