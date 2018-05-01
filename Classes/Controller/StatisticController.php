@@ -1,4 +1,5 @@
 <?php
+
 namespace T3Monitor\T3monitoring\Controller;
 
 /*
@@ -78,8 +79,7 @@ class StatisticController extends BaseController
         $feedItems = null;
         if ($this->emConfiguration->getLoadBulletins()) {
             /** @var BulletinImport $bulletinImport */
-            $bulletinImport = GeneralUtility::makeInstance(BulletinImport::class,
-                'https://typo3.org/xml-feeds/security/1/rss.xml', 5);
+            $bulletinImport = GeneralUtility::makeInstance(BulletinImport::class, 'https://typo3.org/?type=101', 5);
             $feedItems = $bulletinImport->start();
         }
 
