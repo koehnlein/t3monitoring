@@ -6,7 +6,7 @@
 	<h1>{f:translate(key:'view.administration')}</h1>
 	<f:if condition="{emConfiguration.ipHint}">
 		<div class="alert alert-info">
-			<f:translate key="administration.ipHint" arguments="{0:emConfiguration.ipHint}" />
+			<f:format.raw><f:translate key="administration.ipHint" arguments="{0:emConfiguration.ipHint}" /></f:format.raw>
 		</div>
 	</f:if>
 
